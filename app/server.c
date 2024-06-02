@@ -57,7 +57,7 @@ int main() {
 	char buffer[BUFFERSIZE];
 	char *message = "HTTP/1.1 200 OK\r\n\r\n";
 	while( read(client_fd, buffer, BUFFERSIZE) != 0) {
-		send(client_fd, message, strlen(message));
+		send(client_fd, message, strlen(message), 0);
 	}
 	
 	close(server_fd);
