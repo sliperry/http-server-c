@@ -10,7 +10,7 @@ int main() {
 
 	// Uncomment this block to pass the first stage
 	int server_fd, client_addr_len;
-	struct sockaddr_in client_addr, serv_addr;
+	struct sockaddr_in client_addr;
 	
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_fd == -1) {
@@ -26,10 +26,12 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 	
-	serv_addr = { 	.sin_family = AF_INET ,
-					.sin_port = htons(PORT),
-					.sin_addr = { htonl(INADDR_ANY) },
-				};
+	struct sockaddr_in serv_addr = {  .sin_family = AF_INET ,
+									  .sin_port = htons(PORT),
+									  .sin_addr = { htonl(INADDR_ANY) },
+									};
+
+
 	
 	if (bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0) {
 		printf("Bind failed: %s \n", strerror(errno));
