@@ -53,7 +53,6 @@ int main() {
 
         // Read the client's request into the buffer
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
-		printf((int)buffer_result);
 		printf(buffer->content);
 
         switch (buffer_result) {
