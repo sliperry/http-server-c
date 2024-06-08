@@ -58,7 +58,7 @@ int main() {
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
                 // If there was an error reading the request, send an internal server error response
-				printf("request buffer error")
+				printf("request buffer error");
                 response = build_internal_server_error_response();
                 send_response(client_fd, response);
                 free(response);
