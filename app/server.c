@@ -53,7 +53,6 @@ int main() {
 
         // Read the client's request into the buffer
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
-		printf(buffer->content);
 
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
@@ -66,6 +65,7 @@ int main() {
                 // If the request was read successfully, process it
                 request = serialize_request(buffer);
                 response = handle_request(request);
+				printf(response->message);
                 send_response(client_fd, response);
                 free(request);
                 free(response);
