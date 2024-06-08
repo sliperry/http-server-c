@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 // Define buffer sizes and port
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 #define PORT 4221
 
 // Define HTTP methods and response codes

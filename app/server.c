@@ -9,9 +9,6 @@ int main() {
     // Print debug message
     printf("Logs from your program will appear here!\n");
 
-	
-		printf("Just checking \n");
-
     // Initialize server variables
     int server_fd, client_addr_len;
     struct sockaddr_in client_addr;
@@ -52,8 +49,6 @@ int main() {
             continue; // If accept fails, continue to the next iteration
         }
 
-		
-		printf("Just checking\n");
         printf("Client connected\n");
 
         // Read the client's request into the buffer
