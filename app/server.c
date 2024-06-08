@@ -53,12 +53,10 @@ int main() {
 
         // Read the client's request into the buffer
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
-		printf(buffer->content);
 
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
                 // If there was an error reading the request, send an internal server error response
-				printf("request buffer error");
                 response = build_internal_server_error_response();
                 send_response(client_fd, response);
                 free(response);
@@ -66,8 +64,8 @@ int main() {
             case REQUEST_BUFFER_OK:
                 // If the request was read successfully, process it
                 request = serialize_request(buffer);
+				printf(request->path);
                 response = handle_request(request);
-				printf(response->message);
                 send_response(client_fd, response);
                 free(request);
                 free(response);
