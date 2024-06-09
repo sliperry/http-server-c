@@ -142,14 +142,20 @@ Request *serialize_request(RequestBuffer *buffer) {
 
 // Function to handle the request and generate a response
 void handle_request(Request *request, Response *response) {
-    for (PathHandler *handler = path_handlers; handler->path != NULL; ++handler) {
-        if (strcmp(handler->path, request->path) == 0 || strncmp(handler->path, "/echo/", 6) == 0) {
-            handler->handler(request, response);
-            return;
-        }
+    Response *response = malloc(sizeof(Response));
+
+    if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
+        response->code = HTTP_CODE_OK;
+        strcpy(response->message, "OK");
+    } else if (strncmp(request->path, "/echo/", 6) == 0) {
+        response->code = HTTP_CODE_OK;
+        strcpy(response->message, request->path + 6);  // Extract the string after "/echo/"
+    } else {
+        response->code = HTTP_CODE_NOT_FOUND;
+        strcpy(response->message, "Not Found");
     }
-    response->code = HTTP_CODE_NOT_FOUND;
-    strcpy(response->message, "Not Found");
+
+    return response;
 }
 
 // Function to create a server socket
