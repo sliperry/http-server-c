@@ -6,10 +6,9 @@ int main() {
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
 
-    // Print debug message
+    // Print statements for debugging
     printf("Logs from your program will appear here!\n");
 
-    // Initialize server variables
     int server_fd, client_addr_len;
     struct sockaddr_in client_addr;
     RequestBuffer *buffer = create_request_buffer();
@@ -18,51 +17,46 @@ int main() {
 
     // Create and configure the server socket
     server_fd = create_socket();
-    configure_socket(server_fd);  
-    
-    // Define the server address
-    struct sockaddr_in serv_addr = {  .sin_family = AF_INET ,
-                                      .sin_port = htons(PORT),
-                                      .sin_addr = { htonl(INADDR_ANY) },
-                                    };
-    
-    // Bind the server socket
+    configure_socket(server_fd);
+
+    struct sockaddr_in serv_addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(PORT),
+        .sin_addr = { htonl(INADDR_ANY) },
+    };
+
     if (bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0) {
         printf("Bind failed: %s \n", strerror(errno));
         exit(EXIT_FAILURE);
     }
-    
-    // Listen for incoming connections
+
     if (listen(server_fd, 5) != 0) {
         printf("Listen failed: %s \n", strerror(errno));
         exit(EXIT_FAILURE);
     }
-    
+
     printf("Waiting for a client to connect...\n");
     client_addr_len = sizeof(client_addr);
 
-    // Infinite loop to accept and handle client connections
     while (1) {
+        // Accept client connections in a loop
         int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
         if (client_fd < 0) {
             printf("Accept failed: %s\n", strerror(errno));
-            continue; // If accept fails, continue to the next iteration
+            continue;
         }
 
         printf("Client connected\n");
 
-        // Read the client's request into the buffer
+        // Read data from the client
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
-
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
-                // If there was an error reading the request, send an internal server error response
                 response = build_internal_server_error_response();
                 send_response(client_fd, response);
                 free(response);
                 break;
             case REQUEST_BUFFER_OK:
-                // If the request was read successfully, process it
                 request = serialize_request(buffer);
                 response = handle_request(request);
                 send_response(client_fd, response);
@@ -71,17 +65,14 @@ int main() {
                 break;
         }
 
-        // Reset the buffer for the next request
         buffer->read_bytes = 0;
         printf("Client disconnected\n");
-        // Close the client connection
         close(client_fd);
     }
-    
-    // Close the server socket (not reachable in this infinite loop)
-    close(server_fd);
 
-    // Exit the program successfully
+    close(server_fd);
+    free(buffer);
+
     exit(EXIT_SUCCESS);
 }
 
@@ -94,11 +85,12 @@ RequestBuffer *create_request_buffer() {
 
 // Function to read data into the request buffer
 REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd) {
-	buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
-	if (buffer->read_bytes == -1) {
+    buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
+    if (buffer->read_bytes == -1) {
         return REQUEST_BUFFER_ERROR;
     }
     buffer->content[buffer->read_bytes] = '\0';
+    printf("Received content from client: %s\n", buffer->content);
     return REQUEST_BUFFER_OK;
 }
 
@@ -110,7 +102,7 @@ Response *build_internal_server_error_response() {
     return response;
 }
 
-// Function to calculate the number of bytes until a specific character
+// Function to calculate bytes till a specified character
 int calc_bytes_till_char(const char *sequence, char c) {
     int count = 0;
     const char *s = sequence;
@@ -121,7 +113,7 @@ int calc_bytes_till_char(const char *sequence, char c) {
     return count;
 }
 
-// Function to serialize the request
+// Function to serialize the request from the buffer
 Request *serialize_request(RequestBuffer *buffer) {
     Request *request = malloc(sizeof(Request));
     char *content = strdup(buffer->content);
@@ -140,7 +132,7 @@ Request *serialize_request(RequestBuffer *buffer) {
     return request;
 }
 
-// Function to handle the request and generate a response
+// Function to handle the request
 Response *handle_request(Request *request) {
     Response *response = malloc(sizeof(Response));
 
@@ -158,7 +150,7 @@ Response *handle_request(Request *request) {
     return response;
 }
 
-// Function to create a server socket
+// Function to create a socket
 int create_socket() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
@@ -168,7 +160,7 @@ int create_socket() {
     return server_fd;
 }
 
-// Function to configure the server socket
+// Function to configure the socket
 void configure_socket(int server_fd) {
     int reuse = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
@@ -177,13 +169,16 @@ void configure_socket(int server_fd) {
     }
 }
 
-// Function to send a response to the client
+// Function to send the response
 void send_response(int client_fd, Response *response) {
-    size_t resp_size = 17 + strlen(response->message);
-    char *formatted_response = malloc(resp_size);
-    sprintf(formatted_response, "HTTP/1.1 %d %s\r\n\r\n", response->code, response->message);
-    ssize_t bytes_sent = send(client_fd, formatted_response, resp_size, 0);
-    free(formatted_response);
+    char headers[BUFFER_SIZE];
+    snprintf(headers, BUFFER_SIZE,
+             "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
+             response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message));
+
+    ssize_t bytes_sent = send(client_fd, headers, strlen(headers), 0);
+    bytes_sent = send(client_fd, response->message, strlen(response->message), 0);
+
     if (bytes_sent == -1) {
         printf("Response not sent due to error\n");
     }
