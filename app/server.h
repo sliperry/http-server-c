@@ -46,7 +46,8 @@ typedef struct {
 // Struct for HTTP response
 typedef struct {
     HTTP_CODE code;
-    char message[BUFFER_
+    char message[BUFFER_SIZE];
+} Response;
 
 // Function declarations
 void setup_server(int *server_fd, struct sockaddr_in *serv_addr);
