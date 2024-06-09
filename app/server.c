@@ -141,7 +141,7 @@ Request *serialize_request(RequestBuffer *buffer) {
 }
 
 // Function to handle the request and generate a response
-void handle_request(Request *request, Response *response) {
+Response *handle_request(Request *request) {
     Response *response = malloc(sizeof(Response));
 
     if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
