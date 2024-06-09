@@ -49,6 +49,13 @@ typedef struct {
     char message[BUFFER_SIZE];
 } Response;
 
+typedef void (*RequestHandler)(Request *request, Response *response);
+
+typedef struct {
+    const char *path;
+    RequestHandler handler;
+} PathHandler;
+
 // Function declarations
 void setup_server(int *server_fd, struct sockaddr_in *serv_addr);
 void handle_client(int client_fd);
@@ -62,5 +69,12 @@ Response *handle_request(Request *request);
 int create_socket();
 void configure_socket(int server_fd);
 void send_response(int client_fd, Response *response);
+
+// Global path handler table
+PathHandler path_handlers[] = {
+    { "/", handle_root },
+    { "/echo/", handle_echo },
+    { NULL, handle_not_found } // Default handler
+};
 
 #endif // SERVER_H

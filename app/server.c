@@ -64,7 +64,6 @@ int main() {
             case REQUEST_BUFFER_OK:
                 // If the request was read successfully, process it
                 request = serialize_request(buffer);
-				printf("Thet test is %s \n",request->path);
                 response = handle_request(request);
                 send_response(client_fd, response);
                 free(request);
@@ -95,7 +94,7 @@ RequestBuffer *create_request_buffer() {
 
 // Function to read data into the request buffer
 REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd) {
-    buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
+	buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
 	if (buffer->read_bytes == -1) {
         return REQUEST_BUFFER_ERROR;
     }
@@ -142,16 +141,15 @@ Request *serialize_request(RequestBuffer *buffer) {
 }
 
 // Function to handle the request and generate a response
-Response *handle_request(Request *request) {
-    Response *response = malloc(sizeof(Response));
-    if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
-        response->code = HTTP_CODE_OK;
-        strcpy(response->message, "OK");
-    } else {
-        response->code = HTTP_CODE_NOT_FOUND;
-        strcpy(response->message, "Not Found");
+void handle_request(Request *request, Response *response) {
+    for (PathHandler *handler = path_handlers; handler->path != NULL; ++handler) {
+        if (strcmp(handler->path, request->path) == 0 || strncmp(handler->path, "/echo/", 6) == 0) {
+            handler->handler(request, response);
+            return;
+        }
     }
-    return response;
+    response->code = HTTP_CODE_NOT_FOUND;
+    strcpy(response->message, "Not Found");
 }
 
 // Function to create a server socket
