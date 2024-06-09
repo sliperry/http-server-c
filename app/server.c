@@ -147,6 +147,8 @@ Response *handle_request(Request *request) {
         strcpy(response->message, "Not Found");
     }
 
+	printf(response->message);
+
     return response;
 }
 
