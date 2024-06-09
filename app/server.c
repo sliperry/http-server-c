@@ -64,7 +64,7 @@ int main() {
             case REQUEST_BUFFER_OK:
                 // If the request was read successfully, process it
                 request = serialize_request(buffer);
-				printf(request->path);
+				printf("Thet test is %s \n",request->path);
                 response = handle_request(request);
                 send_response(client_fd, response);
                 free(request);
