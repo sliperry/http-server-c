@@ -71,7 +71,7 @@ int main() {
             case REQUEST_BUFFER_OK:
                 request = serialize_request(buffer);
                 response = handle_request(request);
-                printf(response->message);
+                printf("Here is the text: %c",response->message);
                 send_response(client_fd, response);
                 free(request);
                 free(response);
