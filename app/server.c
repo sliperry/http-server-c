@@ -63,7 +63,6 @@ int main() {
                 free(response);
                 break;
             case REQUEST_BUFFER_OK:
-                printf("The request as a whole:\n%s\n", buffer->content); // Improved logging
                 request = serialize_request(buffer);
                 response = handle_request(request);
                 send_response(client_fd, response);
@@ -162,7 +161,8 @@ void send_response(int client_fd, Response *response) {
              "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
              response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message) - 1);
 
-    printf("Sending content to client:\n%s\n", headers);
+    printf("Sending header to client:\n%s\n", headers);
+    printf("Sending content to client:\n%s\n", response->message);
     
     int bytes_sent = send(client_fd, headers, strlen(headers), 0);
     bytes_sent = send(client_fd, response->message, strlen(response->message), 0);
