@@ -159,7 +159,7 @@ void send_response(int client_fd, Response *response) {
     char headers[BUFFER_SIZE];
     snprintf(headers, BUFFER_SIZE,
              "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
-             response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message) - 1);
+             response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message));
 
     printf("Sending header to client:\n%s\n", headers);
     printf("Sending content to client:\n%s\n", response->message);
