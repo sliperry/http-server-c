@@ -11,13 +11,25 @@ int main() {
 
     int server_fd, client_addr_len;
     struct sockaddr_in client_addr;
-    RequestBuffer *buffer = create_request_buffer();
+
+    RequestBuffer *buffer = malloc(sizeof(RequestBuffer));
+    buffer->read_bytes = 0;
+
     Request *request;
     Response *response;
 
     // Create and configure the server socket
-    server_fd = create_socket();
-    configure_socket(server_fd);
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == -1) {
+        printf("Socket creation failed: %s...\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    int reuse = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        printf("SO_REUSEADDR failed: %s\n", strerror(errno));
+        exit(errno);
+    }
 
     struct sockaddr_in serv_addr = {
         .sin_family = AF_INET,
@@ -76,12 +88,6 @@ int main() {
     exit(EXIT_SUCCESS);
 }
 
-// Function to create a request buffer
-RequestBuffer *create_request_buffer() {
-    RequestBuffer *buffer = malloc(sizeof(RequestBuffer));
-    buffer->read_bytes = 0;
-    return buffer;
-}
 
 // Function to read data into the request buffer
 REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd) {
@@ -147,29 +153,9 @@ Response *handle_request(Request *request) {
         strcpy(response->message, "Not Found");
     }
 
-	printf(response->message);
-
     return response;
 }
 
-// Function to create a socket
-int create_socket() {
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd == -1) {
-        printf("Socket creation failed: %s...\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    return server_fd;
-}
-
-// Function to configure the socket
-void configure_socket(int server_fd) {
-    int reuse = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        printf("SO_REUSEADDR failed: %s\n", strerror(errno));
-        exit(errno);
-    }
-}
 
 // Function to send the response
 void send_response(int client_fd, Response *response) {
@@ -178,16 +164,10 @@ void send_response(int client_fd, Response *response) {
              "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
              response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message));
 
-    ssize_t bytes_sent = send(client_fd, headers, strlen(headers), 0);
+    int bytes_sent = send(client_fd, headers, strlen(headers), 0);
     bytes_sent = send(client_fd, response->message, strlen(response->message), 0);
 
     if (bytes_sent == -1) {
         printf("Response not sent due to error\n");
     }
-}
-
-// Function to handle errors
-void error(const char *msg) {
-    perror(msg);
-    exit(EXIT_FAILURE);
 }
