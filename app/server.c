@@ -98,7 +98,6 @@ REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client
         return REQUEST_BUFFER_ERROR;
     }
     buffer->content[buffer->read_bytes] = '\0';
-    printf("Received content from client:\n%s\n", buffer->content); // Improved logging
     return REQUEST_BUFFER_OK;
 }
 
