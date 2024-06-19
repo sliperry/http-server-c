@@ -91,18 +91,17 @@ int main() {
 }
 
 
-// Function to read data into the request buffer
+
 REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd) {
     buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
     if (buffer->read_bytes == -1) {
         return REQUEST_BUFFER_ERROR;
     }
     buffer->content[buffer->read_bytes] = '\0';
-    printf("Received content from client: %s\n", buffer->content);
+    printf("Received content from client:\n%s\n", buffer->content); // Improved logging
     return REQUEST_BUFFER_OK;
 }
 
-// Function to build an internal server error response
 Response *build_internal_server_error_response() {
     Response *response = malloc(sizeof(Response));
     response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
@@ -110,22 +109,19 @@ Response *build_internal_server_error_response() {
     return response;
 }
 
-// Function to calculate bytes till a specified character
 int calc_bytes_till_char(const char *sequence, char c) {
     int count = 0;
     const char *s = sequence;
-    while (*s != c) {
+    while (*s != c && *s != '\0') { // Ensure not to read beyond the string
         count++;
         s++;
     }
     return count;
 }
 
-// Function to serialize the request from the buffer
 Request *serialize_request(RequestBuffer *buffer) {
     Request *request = malloc(sizeof(Request));
     char *content = strdup(buffer->content);
-    printf("The request as a whole:  %c",*content);
 
     if (strncmp(content, "GET", 3) == 0) {
         request->method = GET;
@@ -141,7 +137,6 @@ Request *serialize_request(RequestBuffer *buffer) {
     return request;
 }
 
-// Function to handle the request
 Response *handle_request(Request *request) {
     Response *response = malloc(sizeof(Response));
 
@@ -159,8 +154,6 @@ Response *handle_request(Request *request) {
     return response;
 }
 
-
-// Function to send the response
 void send_response(int client_fd, Response *response) {
     char headers[BUFFER_SIZE];
     snprintf(headers, BUFFER_SIZE,
