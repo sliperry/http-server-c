@@ -67,6 +67,7 @@ int main() {
                 response = build_internal_server_error_response();
                 send_response(client_fd, response);
                 free(response);
+                printf("Here is the text (btw it was an error): %c",response->message);
                 break;
             case REQUEST_BUFFER_OK:
                 request = serialize_request(buffer);
