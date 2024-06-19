@@ -77,7 +77,7 @@ int main() {
                 break;
         }
 
-        printf("Here is the text: %c",response->message);
+        printf("Here is the text: %s",response->message);
 
         buffer->read_bytes = 0;
         printf("Client disconnected\n");
