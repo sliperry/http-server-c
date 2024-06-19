@@ -41,6 +41,7 @@ typedef struct {
 typedef struct {
     HTTP_METHOD method;
     char path[BUFFER_SIZE];
+    char user_agent[BUFFER_SIZE]; // New field to store User-Agent
 } Request;
 
 // Struct for HTTP response

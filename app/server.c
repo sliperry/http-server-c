@@ -1,15 +1,12 @@
 #include "server.h"
 
-// Main function
 int main() {
-    // Disable output buffering
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
 
-    // Print statements for debugging
     printf("Logs from your program will appear here!\n");
 
-    int server_fd, client_addr_len;
+    int server_fd, client_fd, client_addr_len;
     struct sockaddr_in client_addr;
 
     RequestBuffer *buffer = malloc(sizeof(RequestBuffer));
@@ -18,7 +15,6 @@ int main() {
     Request *request;
     Response *response;
 
-    // Create and configure the server socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
         printf("Socket creation failed: %s...\n", strerror(errno));
@@ -51,8 +47,7 @@ int main() {
     client_addr_len = sizeof(client_addr);
 
     while (1) {
-        // Accept client connections in a loop
-        int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+        client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
         if (client_fd < 0) {
             printf("Accept failed: %s\n", strerror(errno));
             continue;
@@ -60,7 +55,6 @@ int main() {
 
         printf("Client connected\n");
 
-        // Read data from the client
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
@@ -69,6 +63,7 @@ int main() {
                 free(response);
                 break;
             case REQUEST_BUFFER_OK:
+                printf("The request as a whole:\n%s\n", buffer->content); // Improved logging
                 request = serialize_request(buffer);
                 response = handle_request(request);
                 send_response(client_fd, response);
@@ -77,20 +72,16 @@ int main() {
                 break;
         }
 
-        printf("Here is the text: %s",response->message);
-
         buffer->read_bytes = 0;
         printf("Client disconnected\n");
         close(client_fd);
-    }  
+    }
 
     close(server_fd);
     free(buffer);
 
-    exit(EXIT_SUCCESS);
+    return 0;
 }
-
-
 
 REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd) {
     buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
@@ -133,6 +124,14 @@ Request *serialize_request(RequestBuffer *buffer) {
     strncpy(request->path, content + 4, path_bytes);
     request->path[path_bytes] = '\0';
 
+    // Extract User-Agent from headers
+    char *user_agent_start = strstr(content, "User-Agent:");
+    if (user_agent_start != NULL) {
+        sscanf(user_agent_start, "User-Agent: %[^\n]", request->user_agent);
+    } else {
+        strcpy(request->user_agent, "Unknown");
+    }
+
     free(content);
     return request;
 }
@@ -140,7 +139,10 @@ Request *serialize_request(RequestBuffer *buffer) {
 Response *handle_request(Request *request) {
     Response *response = malloc(sizeof(Response));
 
-    if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
+    if (strcmp(request->path, "/user-agent") == 0) {
+        response->code = HTTP_CODE_OK;
+        strcpy(response->message, request->user_agent);
+    } else if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
         response->code = HTTP_CODE_OK;
         strcpy(response->message, "OK");
     } else if (strncmp(request->path, "/echo/", 6) == 0) {
