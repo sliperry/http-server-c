@@ -67,22 +67,22 @@ int main() {
                 response = build_internal_server_error_response();
                 send_response(client_fd, response);
                 free(response);
-                printf("Here is the text (btw it was an error): %c",response->message);
                 break;
             case REQUEST_BUFFER_OK:
                 request = serialize_request(buffer);
                 response = handle_request(request);
-                printf("Here is the text: %c",response->message);
                 send_response(client_fd, response);
                 free(request);
                 free(response);
                 break;
         }
 
+        printf("Here is the text: %c",response->message);
+
         buffer->read_bytes = 0;
         printf("Client disconnected\n");
         close(client_fd);
-    }
+    }  
 
     close(server_fd);
     free(buffer);
