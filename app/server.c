@@ -125,6 +125,7 @@ int calc_bytes_till_char(const char *sequence, char c) {
 Request *serialize_request(RequestBuffer *buffer) {
     Request *request = malloc(sizeof(Request));
     char *content = strdup(buffer->content);
+    printf("The request as a whole:  %c",*content);
 
     if (strncmp(content, "GET", 3) == 0) {
         request->method = GET;
