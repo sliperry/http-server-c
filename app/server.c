@@ -141,9 +141,6 @@ Response *handle_request(Request *request) {
     if (strcmp(request->path, "/user-agent") == 0) {
         response->code = HTTP_CODE_OK;
         strcpy(response->message, request->user_agent);
-    } else if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
-        response->code = HTTP_CODE_OK;
-        strcpy(response->message, "OK");
     } else if (strncmp(request->path, "/echo/", 6) == 0) {
         response->code = HTTP_CODE_OK;
         strcpy(response->message, request->path + 6);  // Extract the string after "/echo/"
