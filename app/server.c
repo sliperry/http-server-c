@@ -154,6 +154,15 @@ Request *serialize_request(RequestBuffer *buffer) {
     char *user_agent_start = strstr(content, "User-Agent:");
     if (user_agent_start != NULL) {
         sscanf(user_agent_start, "User-Agent: %[^\n]", request->user_agent);
+
+        // Remove any trailing newline or carriage return from the user_agent string
+        size_t len = strlen(request->user_agent);
+        if (len > 0 && (request->user_agent[len - 1] == '\n' || request->user_agent[len - 1] == '\r')) {
+            request->user_agent[len - 1] = '\0';
+        }
+
+        // Further debug print to check user agent string
+        printf("Extracted User-Agent: '%s' with length %zu\n", request->user_agent, strlen(request->user_agent));
     } else {
         strcpy(request->user_agent, "Unknown");
     }
