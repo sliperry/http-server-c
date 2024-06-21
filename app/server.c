@@ -99,14 +99,33 @@ int main() {
                     exit(EXIT_FAILURE);
                 }
 
+                // Calculate the length of the path
+                int path_bytes = 0;
+                const char *s = content + 4;
+                while (*s != ' ' && *s != '\0') { // Ensure not to read beyond the string
+                    path_bytes++;
+                    s++;
+                }
+
+                if (path_bytes < 0 || path_bytes >= BUFFER_SIZE) {
+                    fprintf(stderr, "Invalid path length\n");
+                    free(content); // Free allocated memory for content before returning
+                    free(request); // Free allocated memory for request before returning
+                    exit(EXIT_FAILURE);
+                }
+
+                // Copy the path and null-terminate it
+                strncpy(request->path, content + 4, path_bytes);
+                request->path[path_bytes] = '\0';
+
                 // Extract User-Agent from headers
-                char *start = strstr(content, "User-Agent:");
-                if (start != NULL) {
+                char *start, *end;
+                if ((start = strstr(content, "User-Agent:")) != NULL) {
                     start += strlen("User-Agent:"); // Move the pointer to the end of "User-Agent:"
                     while (*start == ' ') start++;  // Skip any leading spaces
 
                     // Find the end of the User-Agent string
-                    char *end = strpbrk(start, "\r\n");
+                    end = strpbrk(start, "\r\n");
                     if (end) {
                         *end = '\0'; // Null-terminate the User-Agent string at the first newline or carriage return
                     }
@@ -118,7 +137,6 @@ int main() {
                 } else {
                     strcpy(request->user_agent, "Unknown");
                 }
-
                 // Free allocated memory for content since it's no longer needed
                 free(content);
                 
