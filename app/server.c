@@ -13,7 +13,16 @@ int main() {
     buffer->read_bytes = 0;
 
     Request *request;
-    Response *response;
+    if (request == NULL) {
+        fprintf(stderr, "Memory allocation failed for request\n");
+        exit(EXIT_FAILURE);
+    }
+
+    Response *response = malloc(sizeof(Response));
+    if (response == NULL) {
+        fprintf(stderr, "Memory allocation failed for response\n");
+        exit(EXIT_FAILURE);
+    }
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
@@ -55,12 +64,7 @@ int main() {
 
         printf("Client connected\n");
 
-        REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
-        Response *response = malloc(sizeof(Response));
-        if (response == NULL) {
-            fprintf(stderr, "Memory allocation failed for response\n");
-            exit(EXIT_FAILURE);
-        }
+        REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);        
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
                 response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
