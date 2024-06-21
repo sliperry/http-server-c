@@ -26,11 +26,6 @@ typedef enum {
     HTTP_CODE_INTERNAL_SERVER_ERROR = 500
 } HTTP_CODE;
 
-typedef enum { 
-    REQUEST_BUFFER_ERROR, 
-    REQUEST_BUFFER_OK 
-} REQUEST_BUFFER_RESULT;
-
 // Struct for request buffer
 typedef struct {
     char content[BUFFER_SIZE];

@@ -55,24 +55,26 @@ int main() {
         Request *request = malloc(sizeof(Request));
         if (request == NULL) {
             fprintf(stderr, "Memory allocation failed for request\n");
+            close(client_fd);
             exit(EXIT_FAILURE);
         }
 
         Response *response = malloc(sizeof(Response));
         if (response == NULL) {
             fprintf(stderr, "Memory allocation failed for response\n");
+            free(request);
+            close(client_fd);
             exit(EXIT_FAILURE);
         }
 
-        REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);        
-        switch (buffer_result) {
-            case REQUEST_BUFFER_ERROR:
+        switch (recv(client_fd, buffer->content, BUFFER_SIZE, 0)) {
+            case -1:
                 response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
                 strcpy(response->message, "Internal Server Error");
                 send_response(client_fd, response);
                 free(response);
                 break;
-            case REQUEST_BUFFER_OK:
+            default:
                 request = serialize_request(buffer);
                 
                 if (strcmp(request->path, "/user-agent") == 0) {
@@ -104,15 +106,6 @@ int main() {
     free(buffer);
 
     return 0;
-}
-
-REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd) {
-    buffer->read_bytes = recv(client_fd, buffer->content, BUFFER_SIZE, 0);
-    if (buffer->read_bytes == -1) {
-        return REQUEST_BUFFER_ERROR;
-    }
-    buffer->content[buffer->read_bytes] = '\0';
-    return REQUEST_BUFFER_OK;
 }
 
 int calc_bytes_till_char(const char *sequence, char c) {
