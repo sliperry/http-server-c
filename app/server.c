@@ -74,7 +74,21 @@ int main() {
                 break;
             case REQUEST_BUFFER_OK:
                 request = serialize_request(buffer);
-                response = handle_request(request);
+                
+                if (strcmp(request->path, "/user-agent") == 0) {
+                    response->code = HTTP_CODE_OK;
+                    strcpy(response->message, request->user_agent);
+                } else if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
+                    response->code = HTTP_CODE_OK;
+                    strcpy(response->message, "OK");
+                }else if (strncmp(request->path, "/echo/", 6) == 0) {
+                    response->code = HTTP_CODE_OK;
+                    strcpy(response->message, request->path + 6);  // Extract the string after "/echo/"
+                } else {
+                    response->code = HTTP_CODE_NOT_FOUND;
+                    strcpy(response->message, "Not Found");
+                }
+
                 send_response(client_fd, response);
                 free(request);
                 free(response);
@@ -99,13 +113,6 @@ REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client
     }
     buffer->content[buffer->read_bytes] = '\0';
     return REQUEST_BUFFER_OK;
-}
-
-Response *build_internal_server_error_response() {
-    Response *response = malloc(sizeof(Response));
-    response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
-    strcpy(response->message, "Internal Server Error");
-    return response;
 }
 
 int calc_bytes_till_char(const char *sequence, char c) {
@@ -183,26 +190,6 @@ Request *serialize_request(RequestBuffer *buffer) {
 
     // Return the populated request struct
     return request;
-}
-
-Response *handle_request(Request *request) {
-    Response *response = malloc(sizeof(Response));
-
-    if (strcmp(request->path, "/user-agent") == 0) {
-        response->code = HTTP_CODE_OK;
-        strcpy(response->message, request->user_agent);
-    } else if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
-        response->code = HTTP_CODE_OK;
-        strcpy(response->message, "OK");
-    }else if (strncmp(request->path, "/echo/", 6) == 0) {
-        response->code = HTTP_CODE_OK;
-        strcpy(response->message, request->path + 6);  // Extract the string after "/echo/"
-    } else {
-        response->code = HTTP_CODE_NOT_FOUND;
-        strcpy(response->message, "Not Found");
-    }
-
-    return response;
 }
 
 void send_response(int client_fd, Response *response) {
