@@ -110,16 +110,43 @@ int calc_bytes_till_char(const char *sequence, char c) {
 }
 
 Request *serialize_request(RequestBuffer *buffer) {
+    // Allocate memory for the request struct
     Request *request = malloc(sizeof(Request));
-    char *content = strdup(buffer->content);
+    if (request == NULL) {
+        fprintf(stderr, "Memory allocation failed for request\n");
+        return NULL;
+    }
 
+    // Duplicate the content from the request buffer
+    char *content = strdup(buffer->content);
+    if (content == NULL) {
+        fprintf(stderr, "Memory allocation failed for content\n");
+        free(request); // Free allocated memory for request before returning
+        return NULL;
+    }
+
+    // Extract and set the HTTP method
     if (strncmp(content, "GET", 3) == 0) {
         request->method = GET;
     } else if (strncmp(content, "POST", 4) == 0) {
         request->method = POST;
+    } else {
+        fprintf(stderr, "Unsupported HTTP method\n");
+        free(content); // Free allocated memory for content before returning
+        free(request); // Free allocated memory for request before returning
+        return NULL;
     }
 
+    // Calculate the length of the path
     int path_bytes = calc_bytes_till_char(content + 4, ' ');
+    if (path_bytes < 0 || path_bytes >= BUFFER_SIZE) {
+        fprintf(stderr, "Invalid path length\n");
+        free(content); // Free allocated memory for content before returning
+        free(request); // Free allocated memory for request before returning
+        return NULL;
+    }
+
+    // Copy the path and null-terminate it
     strncpy(request->path, content + 4, path_bytes);
     request->path[path_bytes] = '\0';
 
@@ -131,7 +158,10 @@ Request *serialize_request(RequestBuffer *buffer) {
         strcpy(request->user_agent, "Unknown");
     }
 
+    // Free allocated memory for content since it's no longer needed
     free(content);
+
+    // Return the populated request struct
     return request;
 }
 
