@@ -49,6 +49,7 @@ int main() {
             printf("Accept failed: %s\n", strerror(errno));
             continue;
         }
+        printf(client_fd);
 
         printf("Client connected\n");
 
