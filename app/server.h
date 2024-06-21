@@ -46,7 +46,6 @@ typedef struct {
 } Response;
 
 // Function declarations
-int calc_bytes_till_char(const char *sequence, char c);
 Request *serialize_request(RequestBuffer *buffer);
 Response *handle_request(Request *request);
 void send_response(int client_fd, Response *response);

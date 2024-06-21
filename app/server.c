@@ -108,16 +108,6 @@ int main() {
     return 0;
 }
 
-int calc_bytes_till_char(const char *sequence, char c) {
-    int count = 0;
-    const char *s = sequence;
-    while (*s != c && *s != '\0') { // Ensure not to read beyond the string
-        count++;
-        s++;
-    }
-    return count;
-}
-
 Request *serialize_request(RequestBuffer *buffer) {
     // Allocate memory for the request struct
     Request *request = malloc(sizeof(Request));
@@ -153,6 +143,7 @@ Request *serialize_request(RequestBuffer *buffer) {
         path_bytes++;
         s++;
     }
+
     if (path_bytes < 0 || path_bytes >= BUFFER_SIZE) {
         fprintf(stderr, "Invalid path length\n");
         free(content); // Free allocated memory for content before returning
