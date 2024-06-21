@@ -153,6 +153,7 @@ Request *serialize_request(RequestBuffer *buffer) {
         path_bytes++;
         s++;
     }
+    free(s);
     if (path_bytes < 0 || path_bytes >= BUFFER_SIZE) {
         fprintf(stderr, "Invalid path length\n");
         free(content); // Free allocated memory for content before returning
