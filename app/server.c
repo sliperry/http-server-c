@@ -12,7 +12,7 @@ int main() {
     RequestBuffer *buffer = malloc(sizeof(RequestBuffer));
     buffer->read_bytes = 0;
 
-    Request *request;
+    Request *request = malloc(sizeof(Request));
     if (request == NULL) {
         fprintf(stderr, "Memory allocation failed for request\n");
         exit(EXIT_FAILURE);
