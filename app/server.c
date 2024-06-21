@@ -147,7 +147,12 @@ Request *serialize_request(RequestBuffer *buffer) {
     }
 
     // Calculate the length of the path
-    int path_bytes = calc_bytes_till_char(content + 4, ' ');
+    int path_bytes = 0;
+    const char *s = content + 4;
+    while (*s != ' ' && *s != '\0') { // Ensure not to read beyond the string
+        count++;
+        s++;
+    }
     if (path_bytes < 0 || path_bytes >= BUFFER_SIZE) {
         fprintf(stderr, "Invalid path length\n");
         free(content); // Free allocated memory for content before returning
