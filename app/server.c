@@ -94,7 +94,6 @@ REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client
         return REQUEST_BUFFER_ERROR;
     }
     buffer->content[buffer->read_bytes] = '\0';
-    printf("Received content from client:\n%s\n", buffer->content); // Improved logging
     return REQUEST_BUFFER_OK;
 }
 
@@ -207,9 +206,6 @@ void send_response(int client_fd, Response *response) {
     snprintf(headers, BUFFER_SIZE,
              "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
              response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message));
-
-    printf("Sending header to client:\n%s\n", headers);
-    printf("Sending content to client:\n%s\n", response->message);
     
     int bytes_sent = send(client_fd, headers, strlen(headers), 0);
     bytes_sent = send(client_fd, response->message, strlen(response->message), 0);
