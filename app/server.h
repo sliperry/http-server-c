@@ -52,7 +52,6 @@ typedef struct {
 
 // Function declarations
 REQUEST_BUFFER_RESULT read_into_request_buffer(RequestBuffer *buffer, int client_fd);
-Response *build_internal_server_error_response();
 int calc_bytes_till_char(const char *sequence, char c);
 Request *serialize_request(RequestBuffer *buffer);
 Response *handle_request(Request *request);

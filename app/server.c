@@ -58,7 +58,13 @@ int main() {
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
-                response = build_internal_server_error_response();
+                Response *response = malloc(sizeof(Response));
+                if (response == NULL) {
+                    fprintf(stderr, "Memory allocation failed for response\n");
+                    exit(EXIT_FAILURE);
+                }
+                response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
+                strcpy(response->message, "Internal Server Error");
                 send_response(client_fd, response);
                 free(response);
                 break;
@@ -151,22 +157,24 @@ Request *serialize_request(RequestBuffer *buffer) {
     request->path[path_bytes] = '\0';
 
     // Extract User-Agent from headers
-    char *user_agent_start = strstr(content, "User-Agent:");
-    if (user_agent_start != NULL) {
-        sscanf(user_agent_start, "User-Agent: %[^\n]", request->user_agent);
+    char *start, *end;
+    if ((start = strstr(content, "User-Agent:")) != NULL) {
+        start += strlen("User-Agent:"); // Move the pointer to the end of "User-Agent:"
+        while (*start == ' ') start++;  // Skip any leading spaces
 
-        // Remove any trailing newline or carriage return from the user_agent string
-        size_t len = strlen(request->user_agent);
-        if (len > 0 && (request->user_agent[len - 1] == '\n' || request->user_agent[len - 1] == '\r')) {
-            request->user_agent[len - 1] = '\0';
+        // Find the end of the User-Agent string
+        end = strpbrk(start, "\r\n");
+        if (end) {
+            *end = '\0'; // Null-terminate the User-Agent string at the first newline or carriage return
         }
 
-        // Further debug print to check user agent string
+        strncpy(request->user_agent, start, sizeof(request->user_agent) - 1);
+        request->user_agent[sizeof(request->user_agent) - 1] = '\0'; // Ensure null-termination
+
         printf("Extracted User-Agent: '%s' with length %zu\n", request->user_agent, strlen(request->user_agent));
     } else {
         strcpy(request->user_agent, "Unknown");
     }
-
     // Free allocated memory for content since it's no longer needed
     free(content);
 
