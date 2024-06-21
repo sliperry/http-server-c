@@ -46,8 +46,6 @@ typedef struct {
 } Response;
 
 // Function declarations
-Request *serialize_request(RequestBuffer *buffer);
-Response *handle_request(Request *request);
 void send_response(int client_fd, Response *response);
 
 #endif // SERVER_H
