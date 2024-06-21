@@ -49,7 +49,6 @@ int main() {
             printf("Accept failed: %s\n", strerror(errno));
             continue;
         }
-        printf(client_fd);
 
         printf("Client connected\n");
 
@@ -80,6 +79,7 @@ int main() {
             default:
                 
                  // Duplicate the content from the request buffer
+                printf(buffer->content);
                 content = strdup(buffer->content);
                 if (content == NULL) {
                     fprintf(stderr, "Memory allocation failed for content\n");
@@ -143,7 +143,7 @@ int main() {
                 if (strcmp(request->path, "/user-agent") == 0) {
                     response->code = HTTP_CODE_OK;
                     strcpy(response->message, request->user_agent);
-                } else if (strlen(request->path) == 0 || (strcmp(request->path, "/") == 0 && strlen(request->path) == 1)) {
+                } else if (strcmp(request->path, "/") == 0 ) {
                     response->code = HTTP_CODE_OK;
                     strcpy(response->message, "OK");
                 }else if (strncmp(request->path, "/echo/", 6) == 0) {
