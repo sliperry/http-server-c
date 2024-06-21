@@ -56,13 +56,13 @@ int main() {
         printf("Client connected\n");
 
         REQUEST_BUFFER_RESULT buffer_result = read_into_request_buffer(buffer, client_fd);
+        Response *response = malloc(sizeof(Response));
+        if (response == NULL) {
+            fprintf(stderr, "Memory allocation failed for response\n");
+            exit(EXIT_FAILURE);
+        }
         switch (buffer_result) {
             case REQUEST_BUFFER_ERROR:
-                Response *response = malloc(sizeof(Response));
-                if (response == NULL) {
-                    fprintf(stderr, "Memory allocation failed for response\n");
-                    exit(EXIT_FAILURE);
-                }
                 response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
                 strcpy(response->message, "Internal Server Error");
                 send_response(client_fd, response);
