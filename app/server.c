@@ -67,7 +67,7 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
-        char *content 
+        char *content;
 
         switch (recv(client_fd, buffer->content, BUFFER_SIZE, 0)) {
             case -1:
