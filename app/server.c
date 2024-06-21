@@ -67,6 +67,8 @@ int main() {
             exit(EXIT_FAILURE);
         }
 
+        char *content 
+
         switch (recv(client_fd, buffer->content, BUFFER_SIZE, 0)) {
             case -1:
                 response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
@@ -77,11 +79,11 @@ int main() {
             default:
                 
                  // Duplicate the content from the request buffer
-                char *content = strdup(buffer->content);
+                content = strdup(buffer->content);
                 if (content == NULL) {
                     fprintf(stderr, "Memory allocation failed for content\n");
                     free(request); // Free allocated memory for request before returning
-                    return NULL;
+                    exit(EXIT_FAILURE);
                 }
 
                 // Extract and set the HTTP method
@@ -93,7 +95,7 @@ int main() {
                     fprintf(stderr, "Unsupported HTTP method\n");
                     free(content); // Free allocated memory for content before returning
                     free(request); // Free allocated memory for request before returning
-                    return NULL;
+                    exit(EXIT_FAILURE);
                 }
 
                 // Calculate the length of the path
@@ -108,7 +110,7 @@ int main() {
                     fprintf(stderr, "Invalid path length\n");
                     free(content); // Free allocated memory for content before returning
                     free(request); // Free allocated memory for request before returning
-                    return NULL;
+                    exit(EXIT_FAILURE);
                 }
 
                 // Copy the path and null-terminate it
