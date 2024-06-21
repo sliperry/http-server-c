@@ -150,7 +150,7 @@ Request *serialize_request(RequestBuffer *buffer) {
     int path_bytes = 0;
     const char *s = content + 4;
     while (*s != ' ' && *s != '\0') { // Ensure not to read beyond the string
-        count++;
+        path_bytes++;
         s++;
     }
     if (path_bytes < 0 || path_bytes >= BUFFER_SIZE) {
