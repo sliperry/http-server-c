@@ -6,11 +6,9 @@ int main() {
 
     printf("Logs from your program will appear here!\n");
 
-    int server_fd, client_fd, client_addr_len;
+    int server_fd, client_fd;
     struct sockaddr_in client_addr;
-
-    RequestBuffer *buffer = malloc(sizeof(RequestBuffer));
-    buffer->read_bytes = 0;
+    socklen_t client_addr_len = sizeof(client_addr);
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
@@ -40,8 +38,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    printf("Waiting for a client to connect...\n");
-    client_addr_len = sizeof(client_addr);
+    printf("Waiting for clients to connect...\n");
 
     while (1) {
         client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
@@ -50,114 +47,99 @@ int main() {
             continue;
         }
 
-        printf("Client connected\n");
+        pthread_t thread_id;
+        int *client_socket = malloc(sizeof(int));
+        *client_socket = client_fd;
 
-        Request *request = malloc(sizeof(Request));
-        if (request == NULL) {
-            fprintf(stderr, "Memory allocation failed for request\n");
+        if (pthread_create(&thread_id, NULL, handle_client, (void *)client_socket) != 0) {
+            printf("Failed to create thread: %s\n", strerror(errno));
+            free(client_socket);
             close(client_fd);
-            exit(EXIT_FAILURE);
+        } else {
+            pthread_detach(thread_id);
         }
-
-        Response *response = malloc(sizeof(Response));
-        if (response == NULL) {
-            fprintf(stderr, "Memory allocation failed for response\n");
-            free(request);
-            close(client_fd);
-            exit(EXIT_FAILURE);
-        }
-
-        char *content;
-
-        switch (recv(client_fd, buffer->content, BUFFER_SIZE, 0)) {
-            case -1:
-                response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
-                strcpy(response->message, "Internal Server Error");
-                send_response(client_fd, response);
-                free(response);
-                break;
-            default:
-                
-                 // Duplicate the content from the request buffer
-                printf(buffer->content);
-                content = strdup(buffer->content);
-                if (content == NULL) {
-                    fprintf(stderr, "Memory allocation failed for content\n");
-                    free(request); // Free allocated memory for request before returning
-                    exit(EXIT_FAILURE);
-                }
-
-                // Extract and set the HTTP method
-                if (strncmp(content, "GET", 3) == 0) {
-                    request->method = GET;
-                } else if (strncmp(content, "POST", 4) == 0) {
-                    request->method = POST;
-                } else {
-                    fprintf(stderr, "Unsupported HTTP method\n");
-                    free(content); // Free allocated memory for content before returning
-                    free(request); // Free allocated memory for request before returning
-                    exit(EXIT_FAILURE);
-                }
-
-                // Calculate the length of the path
-                int path_bytes = 0;
-                const char *s = content + 4;
-                while (*s != ' ' && *s != '\0' && path_bytes < BUFFER_SIZE - 1) {
-                    request->path[path_bytes++] = *s++;
-                }
-                request->path[path_bytes] = '\0';
-
-                // Extract User-Agent from headers
-                char *start = strstr(content, "User-Agent:");
-                if (start != NULL) {
-                    start += strlen("User-Agent:"); // Move the pointer to the end of "User-Agent:"
-                    while (*start == ' ') start++;  // Skip any leading spaces
-
-                    // Find the end of the User-Agent string
-                    char *end = strpbrk(start, "\r\n");
-                    if (end) {
-                        *end = '\0'; // Null-terminate the User-Agent string at the first newline or carriage return
-                    }
-
-                    strncpy(request->user_agent, start, sizeof(request->user_agent) - 1);
-                    request->user_agent[sizeof(request->user_agent) - 1] = '\0'; // Ensure null-termination
-
-                    printf("Extracted User-Agent: '%s' with length %zu\n", request->user_agent, strlen(request->user_agent));
-                } else {
-                    strcpy(request->user_agent, "Unknown");
-                }
-                // Free allocated memory for content since it's no longer needed
-                free(content);
-                
-                if (strcmp(request->path, "/user-agent") == 0) {
-                    response->code = HTTP_CODE_OK;
-                    strcpy(response->message, request->user_agent);
-                } else if (strcmp(request->path, "/") == 0 ) {
-                    response->code = HTTP_CODE_OK;
-                    strcpy(response->message, "OK");
-                }else if (strncmp(request->path, "/echo/", 6) == 0) {
-                    response->code = HTTP_CODE_OK;
-                    strcpy(response->message, request->path + 6);  // Extract the string after "/echo/"
-                } else {
-                    response->code = HTTP_CODE_NOT_FOUND;
-                    strcpy(response->message, "Not Found");
-                }
-
-                send_response(client_fd, response);
-                free(request);
-                free(response);
-                break;
-        }
-
-        buffer->read_bytes = 0;
-        printf("Client disconnected\n");
-        close(client_fd);
     }
 
     close(server_fd);
-    free(buffer);
 
     return 0;
+}
+
+void *handle_client(void *arg) {
+    int client_fd = *((int *)arg);
+    free(arg);
+
+    RequestBuffer buffer = { .read_bytes = 0 };
+    Request *request = malloc(sizeof(Request));
+    Response *response = malloc(sizeof(Response));
+
+    if (request == NULL || response == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        close(client_fd);
+        pthread_exit(NULL);
+    }
+
+    switch (recv(client_fd, buffer.content, BUFFER_SIZE, 0)) {
+        case -1:
+            response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
+            strcpy(response->message, "Internal Server Error");
+            send_response(client_fd, response);
+            break;
+        default:
+            printf("%s", buffer.content);
+            char *content = strdup(buffer.content);
+            if (content == NULL) {
+                fprintf(stderr, "Memory allocation failed for content\n");
+                free(request);
+                free(response);
+                close(client_fd);
+                pthread_exit(NULL);
+            }
+
+            if (strncmp(content, "GET", 3) == 0) {
+                request->method = GET;
+            } else if (strncmp(content, "POST", 4) == 0) {
+                request->method = POST;
+            } else {
+                fprintf(stderr, "Unsupported HTTP method\n");
+                free(content);
+                free(request);
+                free(response);
+                close(client_fd);
+                pthread_exit(NULL);
+            }
+
+            int path_bytes = 0;
+            const char *s = content + 4;
+            while (*s != ' ' && *s != '\0' && path_bytes < BUFFER_SIZE - 1) {
+                request->path[path_bytes++] = *s++;
+            }
+            request->path[path_bytes] = '\0';
+
+            free(content);
+
+            if (strcmp(request->path, "/user-agent") == 0) {
+                response->code = HTTP_CODE_OK;
+                strcpy(response->message, "User-Agent");
+            } else if (strcmp(request->path, "/") == 0) {
+                response->code = HTTP_CODE_OK;
+                strcpy(response->message, "OK");
+            } else if (strncmp(request->path, "/echo/", 6) == 0) {
+                response->code = HTTP_CODE_OK;
+                strcpy(response->message, request->path + 6);
+            } else {
+                response->code = HTTP_CODE_NOT_FOUND;
+                strcpy(response->message, "Not Found");
+            }
+
+            send_response(client_fd, response);
+            break;
+    }
+
+    free(request);
+    free(response);
+    close(client_fd);
+    pthread_exit(NULL);
 }
 
 void send_response(int client_fd, Response *response) {
@@ -165,11 +147,7 @@ void send_response(int client_fd, Response *response) {
     snprintf(headers, BUFFER_SIZE,
              "HTTP/1.1 %d %s\r\nContent-Type: text/plain\r\nContent-Length: %zu\r\n\r\n",
              response->code, (response->code == HTTP_CODE_OK) ? "OK" : "Not Found", strlen(response->message));
-    
-    int bytes_sent = send(client_fd, headers, strlen(headers), 0);
-    bytes_sent = send(client_fd, response->message, strlen(response->message), 0);
 
-    if (bytes_sent == -1) {
-        printf("Response not sent due to error\n");
-    }
+    send(client_fd, headers, strlen(headers), 0);
+    send(client_fd, response->message, strlen(response->message), 0);
 }

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <pthread.h>
 
 // Define buffer sizes and port
 #define BUFFER_SIZE 2048
@@ -47,5 +48,6 @@ typedef struct {
 
 // Function declarations
 void send_response(int client_fd, Response *response);
+void *handle_client(void *arg);
 
 #endif // SERVER_H
