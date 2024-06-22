@@ -116,7 +116,22 @@ void *handle_client(void *arg) {
             }
             request->path[path_bytes] = '\0';
 
-            free(content);
+            char *start = strstr(content, "User-Agent:");
+            if (start != NULL) {
+                start += strlen("User-Agent:");
+                while (*start == ' ') start++;
+                char *end = strpbrk(start, "\r\n");
+                if (end) {
+                    *end = '\0';
+                }
+                strncpy(request->user_agent, start, sizeof(request->user_agent) - 1);
+                request->user_agent[sizeof(request->user_agent) - 1] = '\0';
+                printf("Extracted User-Agent: '%s' with length %zu\n", request->user_agent, strlen(request->user_agent));
+            } else {
+                strcpy(request->user_agent, "Unknown");
+            }
+
+            free(content)
 
             if (strcmp(request->path, "/user-agent") == 0) {
                 response->code = HTTP_CODE_OK;
