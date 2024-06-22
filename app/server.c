@@ -131,7 +131,7 @@ void *handle_client(void *arg) {
                 strcpy(request->user_agent, "Unknown");
             }
 
-            free(content)
+            free(content);
 
             if (strcmp(request->path, "/user-agent") == 0) {
                 response->code = HTTP_CODE_OK;
