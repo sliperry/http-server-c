@@ -133,21 +133,54 @@ void *handle_client(void *arg) {
 
             free(content);
 
-            if (strcmp(request->path, "/user-agent") == 0) {
+            if (strncmp(request->path, "/files/", 7) == 0) {
+                char filepath[BUFFER_SIZE];
+                snprintf(filepath, BUFFER_SIZE, "%s/%s", files_directory, request->path + 7);
+
+                struct stat st;
+                if (stat(filepath, &st) == 0) {
+                    FILE *file = fopen(filepath, "rb");
+                    if (file) {
+                        fseek(file, 0, SEEK_END);
+                        size_t file_size = ftell(file);
+                        fseek(file, 0, SEEK_SET);
+
+                        response->code = HTTP_CODE_OK;
+                        fread(response->message, 1, file_size, file);
+                        response->message[file_size] = '\0';
+
+                        fclose(file);
+
+                        snprintf(response->message, BUFFER_SIZE, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %zu\r\n\r\n", file_size);
+                        send(client_fd, response->message, strlen(response->message), 0);
+                        send(client_fd, response->message, file_size, 0);
+                    } else {
+                        response->code = HTTP_CODE_INTERNAL_SERVER_ERROR;
+                        strcpy(response->message, "Internal Server Error");
+                        send_response(client_fd, response);
+                    }
+                } else {
+                    response->code = HTTP_CODE_NOT_FOUND;
+                    strcpy(response->message, "Not Found");
+                    send_response(client_fd, response);
+                }
+            } else if (strcmp(request->path, "/user-agent") == 0) {
                 response->code = HTTP_CODE_OK;
                 strcpy(response->message, request->user_agent);
+                send_response(client_fd, response);
             } else if (strcmp(request->path, "/") == 0) {
                 response->code = HTTP_CODE_OK;
                 strcpy(response->message, "OK");
+                send_response(client_fd, response);
             } else if (strncmp(request->path, "/echo/", 6) == 0) {
                 response->code = HTTP_CODE_OK;
                 strcpy(response->message, request->path + 6);
+                send_response(client_fd, response);
             } else {
                 response->code = HTTP_CODE_NOT_FOUND;
                 strcpy(response->message, "Not Found");
+                send_response(client_fd, response);
             }
-
-            send_response(client_fd, response);
             break;
     }
 
@@ -165,4 +198,12 @@ void send_response(int client_fd, Response *response) {
 
     send(client_fd, headers, strlen(headers), 0);
     send(client_fd, response->message, strlen(response->message), 0);
+}
+
+void parse_args(int argc, char *argv[]) {
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--directory") == 0 && i + 1 < argc) {
+            files_directory = argv[i + 1];
+        }
+    }
 }

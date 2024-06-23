@@ -49,5 +49,6 @@ typedef struct {
 // Function declarations
 void send_response(int client_fd, Response *response);
 void *handle_client(void *arg);
+void parse_args(int argc, char *argv[]);
 
 #endif // SERVER_H
