@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
 #include <pthread.h>
