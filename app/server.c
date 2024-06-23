@@ -1,6 +1,9 @@
 #include "server.h"
 
-int main() {
+
+char *files_directory = NULL;
+
+int main(int argc, char *argv[]) {
     parse_args(argc, argv);
     if (files_directory == NULL) {
         fprintf(stderr, "No directory specified. Use --directory flag.\n");
