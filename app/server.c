@@ -1,6 +1,12 @@
 #include "server.h"
 
 int main() {
+    parse_args(argc, argv);
+    if (files_directory == NULL) {
+        fprintf(stderr, "No directory specified. Use --directory flag.\n");
+        exit(EXIT_FAILURE);
+    }
+
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
 
